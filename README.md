@@ -8,7 +8,7 @@ and then it parses the command and shows the result. This application
 was created as a solution to the test task proposed by the 2025 JetBrains Internship
 Project **LLDB Debugger for Windows** that was required for application.
 
-## Installation
+## Instructions
 
 cmake 3.22 or above is required, as well as gtest for the test executable:
 
