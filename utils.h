@@ -3,7 +3,7 @@
 
 #include <string>
 #include <variant>
-#include "Box.h"
+#include <map>
 
 #define JSON_BEGIN_OBJECT '{'
 #define JSON_END_OBJECT '}'
@@ -23,6 +23,16 @@
 #define COMMAND_ARRAY_SUBSCRIPT_END ']'
 #define COMMAND_WHITESPACE ' '
 
+#define COMMAND_FUNCTION_ARGS_SEPARATOR ','
+#define COMMAND_FUNCTION_BEGIN '('
+#define COMMAND_FUNCTION_END ')'
+
+#define COMMAND_FUNCTION_MAX "max"
+#define COMMAND_FUNCTION_MIN "min"
+#define COMMAND_FUNCTION_SIZE "size"
+
+class CommandBit;
+
 enum JsonBool {
     JsonTrue, JsonFalse, JsonNull
 };
@@ -32,5 +42,7 @@ enum JsonSpecialToken {
 };
 
 typedef std::variant<std::string, long, long double, JsonBool, JsonSpecialToken> JsonToken;
+
+typedef std::map<long, CommandBit> Command;
 
 #endif //UTILS_H

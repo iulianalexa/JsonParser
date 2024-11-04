@@ -1,36 +1,34 @@
 #include <iostream>
-#include <map>
+#include <fstream>
 #include <string>
-#include <variant>
 
-#include "CommandLexer.h"
 #include "CommandParser.h"
-#include "JsonArray.h"
 #include "JsonObject.h"
 
-int main() {
-    //JsonObject obj = JsonObject(R"({"test1": "test2", "test3": {"test4": 5798.45, "test6": ["test10", "test11", false]}})");
-    //JsonObject obj = JsonObject(R"({"a": { "b": [ 1, 2, { "c": "test" }, [11, 12] ]}})");
-    //std::cout << obj;
-    //CommandLexer lexer = CommandLexer("a.b[a.test[55]].c");
-    //std::map<long, CommandBit> tokens = lexer.lex();
+int main(int argc, char **argv) {
+    if (argc != 3) {
+        std::cerr << "Usage: " << argv[0] << " [filename] " << '"' << "command" << '"' << "\n";
+        return -1;
+    }
 
-    JsonObject obj = JsonObject(R"({"a": { "b": [ 1, 2, { "c": "test" }, [11, 12] ]}})");
-    auto parser = CommandParser("a.b[a.b[1]].c", obj);
-    JsonValue value = parser.execute();
-    std::cout << value << "\n";
+    std::string command = argv[2];
 
-    parser = CommandParser("a.b[1]", obj);
-    value = parser.execute();
-    std::cout << value << "\n";
+    std::ifstream fin(argv[1]);
+    if (!fin) {
+        std::cerr << "Cannot open file.\n";
+        return -1;
+    }
 
-    parser = CommandParser("a.b[2].c", obj);
-    value = parser.execute();
-    std::cout << value << "\n";
+    std::string json_str;
+    std::string line;
+    while (getline(fin, line)) {
+        json_str += line;
+        line = "";
+    }
 
-    parser = CommandParser("a.b", obj);
-    value = parser.execute();
-    std::cout << value << "\n";
+    auto json_object = JsonObject(json_str);
+    auto parser = CommandParser(command, json_object);
+    std::cout << parser.execute() << "\n";
 
     return 0;
 }

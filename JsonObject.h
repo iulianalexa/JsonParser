@@ -4,6 +4,7 @@
 
 #include "JsonLexer.h"
 #include "JsonValue.h"
+#include "JsonArray.h"
 
 class JsonObject : public JsonLexer {
 public:

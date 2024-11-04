@@ -88,4 +88,20 @@ public:
     explicit CommandKeyNotFoundException(const int index) : CommandException(index, message) {}
 };
 
+class CommandExpectedFunctionCloseException final : public CommandException {
+public:
+    static constexpr auto message = "Expected function close.";
+
+    CommandExpectedFunctionCloseException() : CommandException(message) {}
+    explicit CommandExpectedFunctionCloseException(const int index) : CommandException(index, message) {}
+};
+
+class CommandUnsupportedFunctionCallException final : public CommandException {
+public:
+    static constexpr auto message = "Unsupported function call for given argument types.";
+
+    CommandUnsupportedFunctionCallException() : CommandException(message) {}
+    explicit CommandUnsupportedFunctionCallException(const int index) : CommandException(index, message) {}
+};
+
 #endif //COMMANDEXCEPTIONS_H

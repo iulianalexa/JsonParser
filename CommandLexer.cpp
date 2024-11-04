@@ -15,9 +15,126 @@ CommandLexer::CommandLexer(const std::string &in) {
     this->in = in;
 }
 
+CommandFunc CommandLexer::lex_command_func(std::string::const_iterator &iter, const std::string::const_iterator &end, int &pos) const {
+    std::map<long, std::variant<CommandFunc, Command, long, long double>> args;
+
+    // Whitespaces can be ignored here
+    while (iter != end && *iter == COMMAND_WHITESPACE) {
+        ++iter;
+        pos++;
+    }
+
+    const CommandFuncType func_type = check_func(iter, end, pos);
+
+    if (func_type == NONE) {
+        // No function. Just parse command
+        const long prev_pos = pos;
+        Command command = lex_command(iter, end, pos);
+        args.insert(make_pair(prev_pos, command));
+    } else {
+        // Parse individual arguments
+        while (iter != end) {
+            // Whitespaces can be ignored here
+            while (iter != end && *iter == COMMAND_WHITESPACE) {
+                ++iter;
+                pos++;
+            }
+
+            if (iter == end) {
+                // Unclosed. Error
+                throw CommandExpectedFunctionCloseException(pos);
+            }
+
+            // Could also be long/double
+            std::variant<long, long double> num_token;
+            int rc = lex_number(iter, end, num_token);
+            if (rc > 0) {
+                if (std::holds_alternative<long>(num_token)) {
+                    args.insert(std::make_pair(pos, std::get<long>(num_token)));
+                } else if (std::holds_alternative<long double>(num_token)) {
+                    args.insert(std::make_pair(pos, std::get<long double>(num_token)));
+                }
+
+                pos += rc;
+            } else {
+                // Another function
+                const long prev_pos = pos;
+                CommandFunc command = lex_command_func(iter, end, pos);
+                args.insert(std::make_pair(prev_pos, command));
+            }
+
+            // Whitespaces can be ignored here
+            while (iter != end && *iter == COMMAND_WHITESPACE) {
+                ++iter;
+                pos++;
+            }
+
+            if (iter == end) {
+                // Unclosed. Error
+                throw CommandExpectedFunctionCloseException(pos);
+            }
+
+            if (*iter == COMMAND_FUNCTION_ARGS_SEPARATOR) {
+                // More
+                ++iter;
+                pos++;
+                continue;
+            }
+
+            if (*iter == COMMAND_FUNCTION_END) {
+                // Stop
+                ++iter;
+                pos++;
+                break;
+            }
+        }
+    }
+
+    // Whitespaces can be ignored here
+    while (iter != end && *iter == COMMAND_WHITESPACE) {
+        ++iter;
+        pos++;
+    }
+
+    if (args.empty()) {
+        throw CommandUnsupportedFunctionCallException(pos);
+    }
+
+    return CommandFunc(args, func_type);
+}
+
+CommandFuncType CommandLexer::check_func(std::string::const_iterator &iter, const std::string::const_iterator &end, int &pos) {
+    std::string max_func_start = std::string(COMMAND_FUNCTION_MAX) + '(';
+    std::string min_func_start = std::string(COMMAND_FUNCTION_MIN) + '(';
+    std::string size_func_start = std::string(COMMAND_FUNCTION_SIZE) + '(';
+
+    if (std::search(iter, end, max_func_start.begin(), max_func_start.end()) == iter) {
+        const size_t size = max_func_start.size();
+        iter += size;
+        pos += size;
+        return MAX;
+    }
+
+    if (std::search(iter, end, min_func_start.begin(), min_func_start.end()) == iter) {
+        const size_t size = min_func_start.size();
+        iter += size;
+        pos += size;
+        return MIN;
+    }
+
+    if (std::search(iter, end, size_func_start.begin(), size_func_start.end()) == iter) {
+        const size_t size = size_func_start.size();
+        iter += size;
+        pos += size;
+        return SIZE;
+    }
+
+    return NONE;
+}
+
 // Does not check COMMAND_ARRAY_SUBSCRIPT_BEGIN
-std::map<long, CommandBit> CommandLexer::lex_command_in_index(std::string::const_iterator &iter, const std::string::const_iterator &end, int &pos) const {
-    std::map<long, CommandBit> out_tokens = lex_command(iter, end, pos);
+CommandFunc CommandLexer::lex_command_in_index(std::string::const_iterator &iter, const std::string::const_iterator &end, int &pos) const {
+    CommandFunc command = lex_command_func(iter, end, pos);
 
     if (iter == end || *iter != COMMAND_ARRAY_SUBSCRIPT_END) {
         throw CommandExpectedArraySubscriptCloseException(pos);
@@ -25,11 +142,11 @@ std::map<long, CommandBit> CommandLexer::lex_command_in_index(std::string::const
 
     ++iter;
     pos++;
-    return out_tokens;
+    return command;
 }
 
-std::map<long, CommandBit> CommandLexer::lex_command(std::string::const_iterator &iter, const std::string::const_iterator &end, int &pos) const {
-    std::map<long, CommandBit> out_tokens;
+Command CommandLexer::lex_command(std::string::const_iterator &iter, const std::string::const_iterator &end, int &pos) const {
+    Command out_tokens;
 
     // All whitespaces are skippable here
     while (iter != end && *iter == COMMAND_WHITESPACE) {
@@ -57,7 +174,7 @@ std::map<long, CommandBit> CommandLexer::lex_command(std::string::const_iterator
     return out_tokens;
 }
 
-std::pair<long, CommandBit> CommandLexer::lex_bit(std::string::const_iterator &iter, const std::string::const_iterator &end, int &pos) const {
+Command::value_type CommandLexer::lex_bit(std::string::const_iterator &iter, const std::string::const_iterator &end, int &pos) const {
     // Get string, then indices
 
     long pair1 = pos;
@@ -71,7 +188,7 @@ std::pair<long, CommandBit> CommandLexer::lex_bit(std::string::const_iterator &i
     pos += rc;
 
     // Get indices
-    std::map<long, std::variant<std::map<long, CommandBit>, long>> indices;
+    std::map<long, std::variant<Box<CommandFunc>, long>> indices;
     while (iter != end && *iter == COMMAND_ARRAY_SUBSCRIPT_BEGIN) {
         ++iter;
         pos++;
@@ -86,24 +203,24 @@ std::pair<long, CommandBit> CommandLexer::lex_bit(std::string::const_iterator &i
                 throw CommandExpectedArraySubscriptCloseException(pos);
             }
 
-            indices[pos] = num_token;
+            indices.insert(std::make_pair(pos, num_token));
             pos += rc;
             pos++;
             ++iter;
         } else {
-            std::map<long, CommandBit> subcommand = lex_command_in_index(iter, end, pos);
-            indices[prev_pos] = subcommand;
+            CommandFunc subcommand = lex_command_in_index(iter, end, pos);
+            indices.insert(std::make_pair(prev_pos, subcommand));
         }
     }
 
     return std::make_pair(pair1, CommandBit(str_token, indices));
 }
 
-std::map<long, CommandBit> CommandLexer::lex() const {
+CommandFunc CommandLexer::lex() const {
     auto iter = in.cbegin();
     auto end = in.cend();
     int pos = 0;
-    return lex_command(iter, end, pos);
+    return lex_command_func(iter, end, pos);
 }
 
 int CommandLexer::lex_number(std::string::const_iterator &iter, const std::string::const_iterator &end, std::variant<long, long double> &out) {

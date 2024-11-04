@@ -28,4 +28,6 @@ add_executable(JsonParser main.cpp
         CommandParser.h
         JsonValue.cpp
         JsonValue.h
+        CommandFunc.cpp
+        CommandFunc.h
 )

@@ -3,7 +3,9 @@
 #include <map>
 #include <string>
 
+#include "utils.h"
 #include "CommandBit.h"
+#include "CommandFunc.h"
 
 bool is_escape_char(char c);
 
@@ -13,16 +15,20 @@ class CommandLexer {
 protected:
     explicit CommandLexer(const std::string &in);
 
-    [[nodiscard]] std::map<long, CommandBit> lex() const;
+    [[nodiscard]] CommandFunc lex() const;
 
 private:
     friend class CommandBit;
 
-    std::map<long, CommandBit> lex_command_in_index(std::string::const_iterator &iter, const std::string::const_iterator &end, int &pos) const;
+    static CommandFuncType check_func(std::string::const_iterator &iter, const std::string::const_iterator &end, int &pos);
 
-    std::map<long, CommandBit> lex_command(std::string::const_iterator &iter, const std::string::const_iterator &end, int &pos) const;
+    CommandFunc lex_command_func(std::string::const_iterator &iter, const std::string::const_iterator &end, int &pos) const;
 
-    std::pair<long, CommandBit> lex_bit(std::string::const_iterator &iter, const std::string::const_iterator &end, int &pos) const;
+    CommandFunc lex_command_in_index(std::string::const_iterator &iter, const std::string::const_iterator &end, int &pos) const;
+
+    Command lex_command(std::string::const_iterator &iter, const std::string::const_iterator &end, int &pos) const;
+
+    Command::value_type lex_bit(std::string::const_iterator &iter, const std::string::const_iterator &end, int &pos) const;
 
     static int lex_long(std::string::const_iterator &iter, const std::string::const_iterator &end, long &out);
 

@@ -11,9 +11,10 @@ public:
 
 private:
     JsonObject json_object;
-    std::map<long, CommandBit> tokens;
 
-    [[nodiscard]] JsonValue execute_internal(const std::map<long, CommandBit> &tokens) const;
+    [[nodiscard]] JsonValue execute_internal(const CommandFunc &command) const;
+
+    [[nodiscard]] JsonValue execute_command(const Command &command) const;
 };
 
 #endif //COMMANDPARSER_H
