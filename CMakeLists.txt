@@ -3,31 +3,22 @@ project(JsonParser)
 
 set(CMAKE_CXX_STANDARD 20)
 
-include_directories(${CMAKE_SOURCE_DIR})
+set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
 
-add_executable(JsonParser main.cpp
-        JsonArray.cpp
-        JsonLexer.cpp
-        JsonObject.cpp
-        JsonExceptions.cpp
-        Json.cpp
-        Json.h
-        JsonArray.h
-        JsonExceptions.h
-        JsonObject.h
-        JsonLexer.h
-        utils.h
-        Box.h
-        CommandLexer.h
-        CommandLexer.cpp
-        CommandExceptions.h
-        CommandExceptions.cpp
-        CommandBit.cpp
-        CommandBit.h
-        CommandParser.cpp
-        CommandParser.h
-        JsonValue.cpp
-        JsonValue.h
-        CommandFunc.cpp
-        CommandFunc.h
-)
+set(TEST_DIR ${CMAKE_SOURCE_DIR}/test)
+
+include_directories(${SRC_DIR})
+
+file(GLOB_RECURSE SRC_FILES ${SRC_DIR}/*.cpp)
+
+file(GLOB_RECURSE TEST_FILES ${TEST_DIR}/*.cpp)
+
+add_library(JsonParser ${SRC_FILES})
+
+add_executable(json_eval main.cpp)
+target_link_libraries(json_eval JsonParser)
+
+find_package(GTest REQUIRED)
+
+add_executable(json_test ${TEST_FILES})
+target_link_libraries(json_test GTest::gtest GTest::gtest_main pthread JsonParser)

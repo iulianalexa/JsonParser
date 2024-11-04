@@ -4,6 +4,9 @@
 #include <string>
 
 class CommandException : public std::exception {
+public:
+    [[nodiscard]] const char *what() const noexcept override;
+
 protected:
     std::string message = "Exception";
 
@@ -12,8 +15,6 @@ protected:
     explicit CommandException(const char *err_msg);
 
     CommandException(int index, const char *err_msg);
-
-    [[nodiscard]] const char *what() const noexcept override;
 };
 
 class CommandUnexpectedTokenException final : public CommandException {

@@ -161,6 +161,10 @@ Command CommandLexer::lex_command(std::string::const_iterator &iter, const std::
         ++iter;
         pos++;
 
+        if (iter == end) {
+            throw CommandUnexpectedTokenException(pos - 1);
+        }
+
         bit = lex_bit(iter, end, pos);
         out_tokens.insert(bit);
     }

@@ -5,6 +5,9 @@
 #include <string>
 
 class JsonException : public std::exception {
+public:
+    [[nodiscard]] const char *what() const noexcept override;
+
 protected:
     std::string message = "Exception";
 
@@ -13,8 +16,6 @@ protected:
     explicit JsonException(const char *err_msg);
 
     JsonException(int index, const char *err_msg);
-
-    [[nodiscard]] const char *what() const noexcept override;
 };
 
 class JsonIncompleteStringException final : public JsonException {

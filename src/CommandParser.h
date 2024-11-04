@@ -7,6 +7,7 @@
 class CommandParser : CommandLexer {
 public:
     CommandParser(const std::string &in, const JsonObject &json_object);
+
     [[nodiscard]] JsonValue execute() const;
 
 private:
