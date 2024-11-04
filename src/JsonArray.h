@@ -2,6 +2,7 @@
 #define JSONARRAY_H
 #include <string>
 #include <map>
+#include <vector>
 
 #include "JsonLexer.h"
 #include "Json.h"
